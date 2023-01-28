@@ -1,0 +1,19 @@
+{
+  "name": "iot_datastream",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "save": "^2.9.0"
+  },
+  "devDependencies": {
+    "aedes": "^0.48.1",
+    "eventsource": "^2.0.2",
+    "node-static": "^0.7.11"
+  }
+}

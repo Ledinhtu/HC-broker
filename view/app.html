@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DASHBROAD CONTROL</title>
+    <!-- <link rel="stylesheet" href="app.css"> -->
+    <style>
+        html {
+            font-family: Arial, Helvetica, sans-serif;
+            text-align: center;
+        }
+        h1 {
+           font-size: 1.8rem;
+           color: white;
+        }
+        h2{
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #143642;
+        }
+        .topnav {
+            overflow: hidden;
+            background-color: #143642;
+        }
+        body {
+            margin: 0;
+        }
+        .content {
+            padding: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+            .card {
+                background-color: #F8F7F9;;
+                box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
+                padding-top:10px;
+                padding-bottom:20px;
+                border-radius: 10px;
+            }
+            .button {
+                margin: 0px 20px ;
+                padding: 15px 50px;
+                font-size: 24px;
+                text-align: center;
+                outline: none;
+                color: #143642;
+                background-color: #F8F7F9;
+                font-size: 1.5rem;
+                font-weight: bold;
+                border: none;
+                border-radius: 5px;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+                -webkit-tap-highlight-color: rgba(0,0,0,0);
+            }
+            /*.button:hover {background-color: #0f8b8d}*/
+            /* .button:active {
+                background-color: #0f8b8d;
+                box-shadow: 2 2px #CDCDCD;
+                transform: translateY(2px);
+            } */
+
+            .button-logout {
+                display: inline;
+                background-color: #0f8b8d;
+                opacity: 70%;
+                color: #ffffff;
+                float: right;
+                margin-bottom: 15px; 
+            }
+
+            
+            .button-logout:hover {
+                
+                background-color: #0f8b8d;
+                opacity: 100%;
+                color: #ffffff;
+            }
+            
+            .button-mainpage {
+                display: inline;
+                background-color: #0f8b8d;
+                opacity: 70%;
+                color: #ffffff;
+                float: left;
+                margin-bottom: 15px; 
+            }
+
+            .button-mainpage:hover {
+                
+                background-color: #0f8b8d;
+                opacity: 100%;
+                color: #ffffff;
+            }
+            .val {
+                font-size: 1.5rem;
+                color:#8c8c8c;
+                font-weight: bold;
+            }
+            .card:hover {
+                background-color: #0f8b8d;
+            }
+    </style>
+    <link rel="icon" href="data:,">
+</head>
+<body>
+    
+  <div class="topnav">
+        <h1>SMART HOME</h1> 
+        <h1 style="color: rgb(46, 181, 230);">DASHBROAD CONTROL</h1>
+        <!-- <button id="mainpage" class="button button-mainpage">Trang chủ</button> -->
+        <button id="button-logout" class="button button-logout" >Đăng xuất</button>
+        <form action="" method="post">
+            <button id="mainpage" class="button button-logout" name="router" value="mainpage">Trang chủ</button>
+        </form>
+
+        <!-- <div id="" class="">hi</div> -->
+  </div>
+  <div class="content">
+    <form action="" method="post">
+        <button class="button card" style="width: 450px;height: 85px;" name="router" value="setting">Cài đặt chế độ</button>
+    </form>
+    </div>
+  </div>
+  <div class="content">
+    <form action="" method="post">
+        <button class="button card" style="width: 450px;height: 85px;" name="router" value="livingroom">Phòng khách</button>
+    </form>
+    </div>
+  </div>
+  <div class="content">
+    <form action="" method="post">
+        <button class="button card" style="width: 450px;height: 85px;" name="router" value="bedroom">Phòng ngủ</button>
+    </form>
+  </div>
+  <div class="content">
+    <form action="" method="post">
+        <button class="button card" style="width: 450px;height: 85px;" name="router" value="kitchen">Phòng bếp</button>
+    </form>
+  </div>
+  
+</body>
+
+<script>
+    const btn_logout = document.querySelector('#button-logout');
+    btn_logout.addEventListener('click', (e) => { // delete all cookies 
+        var allCookies = document.cookie.split(';');
+                
+        for (var i = 0; i < allCookies.length; i++)
+                document.cookie = allCookies[i] + "=;expires="+ new Date(0).toUTCString();
+                
+        location.reload();
+    });
+
+</script>
+
+</html>

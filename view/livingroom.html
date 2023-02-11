@@ -152,23 +152,16 @@
     });
 
     const btn1_on = document.querySelector('#button-1-on');
-    // var bool = true;
-
     btn1_on.addEventListener('click', (e) => {
-        //const number = 1;
-        // bool = !bool
-        // console.log('listened Click');
-        socket.emit('button-1', {
+        socket.emit('livingroom-btn-lamp1', {
             message: 'on'
         });
     })
 
     const btn1_off = document.querySelector('#button-1-off');
-    // var bool = true;
-
     btn1_off.addEventListener('click', (e) => {
         // console.log('listened Click');
-        socket.emit('button-1', {
+        socket.emit('livingroom-btn-lamp1', {
             message: 'off'
         });
     })
@@ -200,7 +193,7 @@
     });
 
     const light1 = document.querySelector('#light-1');
-    socket.on('light-1', (mess) => {
+    socket.on('livingroom-lamp1', (mess) => {
         // light1.innerHTML = mess.toUpperCase();
         if (mess.toUpperCase() == 'ON') {
             light1.innerHTML = 'SÁNG';

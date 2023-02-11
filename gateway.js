@@ -45,7 +45,7 @@ var bedroom = {
 }
 
 var kitchen = {
-    lamp2: {now: 'off'}
+    lamp1: {now: 'off'}
 }
 
 client.on('connect', function () {
@@ -90,7 +90,7 @@ client.on('connect', function () {
 client.on('message', (topic, message, packet) => {
     console.log(`(I): Topic: ${topic}`);
     console.log(`(I): Message: ${message}`);
-    console.log(packet);
+    // console.log(packet);
     
     switch (topic) {
         case 'dht11/temperature':
@@ -113,16 +113,19 @@ client.on('message', (topic, message, packet) => {
             var data = {
                 value: packet.payload.toString(),
             };
+            livingroom.lamp1.now = data.value;
+                io.emit('livingroom-lamp1', livingroom.lamp1.now); 
             publishToCloud(data, 'state', 'livingroom/lamp1');
             break;
 
         case 'state/light/device-2':
             console.log(1);
-            bedroom.lamp1.now = packet.payload.toString();
             io.emit('bedroom-lamp1', bedroom.lamp1.now); 
                 var data = {
                     value: packet.payload.toString(),
                 };
+                bedroom.lamp1.now = data.value;
+                io.emit('bedroom-lamp1', bedroom.lamp1.now); 
                 publishToCloud(data, 'state', 'state/light/device-2');
         break;
 
@@ -130,7 +133,10 @@ client.on('message', (topic, message, packet) => {
                 var data = {
                     value: packet.payload.toString(),
                 };
-                publishToCloud(data, 'state', 'state/light/device-3');
+                kitchen.lamp1.now = data.value;
+                io.emit('kitchen-lamp1', kitchen.lamp1.now);   
+                // console.log( kitchen.lamp1.now);   
+                publishToCloud(data, 'state', 'kitchen/lamp1');
         break;
 
         default:
@@ -206,7 +212,7 @@ app.post('/login', (req, res) => {
 
     console.log(req.body.name, req.body.pass);
     if (req.body.name === name_user && req.body.pass === password) {
-        res.cookie('userId', cookie.userId);    // respone cookie cho client
+        res.cookie('userId', cookie.userId);    // respone cookie to client
         res.redirect('/app');
     } else {
         res.sendFile(__dirname + '/view/login_wrong.html')
@@ -265,6 +271,13 @@ app.get('/livingroom', (req, res) => {;
         return;
     }
     res.sendFile(__dirname + '/view/livingroom.html');
+    setTimeout(()=>
+    {
+        io.emit('livingroom-lamp1', livingroom.lamp1.now);
+        io.emit('livingroom-sensor1-temp', livingroom.sensor1.temp.now);
+        io.emit('livingroom-sensor1-humi', livingroom.sensor1.humi.now);
+    }, 500);
+
 });
 
 app.post('/livingroom', (req, res) => {;
@@ -304,6 +317,10 @@ app.get('/bedroom', (req, res) => {;
         return;
     }
     res.sendFile(__dirname + '/view/bedroom.html');
+    setTimeout(()=>
+    {
+        io.emit('bedroom-lamp1', bedroom.lamp1.now);
+    }, 500);
     // res.send('<h1>BEDROOM</h1>')
 
 });
@@ -325,6 +342,8 @@ app.get('/kitchen', (req, res) => {;
         return;
     }
     res.sendFile(__dirname + '/view/kitchen.html');
+    setTimeout(()=>io.emit('kitchen-lamp1', kitchen.lamp1.now), 500);
+
     // res.send('<h1>KITCHEN</h1>')
 
 });
@@ -393,16 +412,14 @@ io.on('connection', (socket) => {
     //     }
     // });
 
-    socket.on('button-1', data => {
-        // console.log(data);
-        // io.emit('state-1', data);
-        set(ref(database, 'control/light/device-1'), {
-            signal: data.message
-          })
-          .then(()=>{
-            // res.status(200).send(JSON.stringify(req.body));
-          })
-          .catch((e)=>console.log(`(E): ${e}`))
+    socket.on('livingroom-btn-lamp1', data => {
+        console.log(data);
+        if (data.message === 'on') {
+            client.publish('esp32/output', 'on');
+        }
+        else if (data.message === 'off') {
+            client.publish('esp32/output', 'off');
+        }
     });
 
     socket.on('bedroom-btn-lamp1', data => {

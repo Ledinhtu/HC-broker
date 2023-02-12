@@ -95,6 +95,8 @@ client.on('message', (topic, message, packet) => {
     switch (topic) {
         case 'dht11/temperature':
             livingroom.sensor1.temp.now = parseFloat(packet.payload.toString()); 
+            io.emit('livingroom-sensor1-temp', livingroom.sensor1.temp.now ); 
+
             var data = {
                         value: parseFloat(packet.payload.toString()),
                     };
@@ -103,6 +105,8 @@ client.on('message', (topic, message, packet) => {
 
         case 'dht11/humidity':
             livingroom.sensor1.humi.now = parseFloat(packet.payload.toString());
+            io.emit('livingroom-sensor1-humi', livingroom.sensor1.humi.now); 
+
             var data = {
                         value: parseFloat(packet.payload.toString()),
                     };

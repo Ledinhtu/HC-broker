@@ -181,13 +181,13 @@
     // });
 
     const temp_dht11 = document.querySelector('#temp-1');
-    socket.on('temp-1', (mess) => {
+    socket.on('livingroom-sensor1-temp', (mess) => {
         temp_dht11.innerHTML = mess+'\xB0C';
         console.log(mess);
     });
 
     const humi_dht11 = document.querySelector('#humi-1');
-    socket.on('humi-1', (mess) => {
+    socket.on('livingroom-sensor1-humi', (mess) => {
         humi_dht11.innerHTML = mess + '%';
         // console.log(mess);
     });

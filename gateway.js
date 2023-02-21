@@ -1,6 +1,5 @@
 const mqtt = require('mqtt');
-// const mqtt = require('mqtt-packet');
-// const client  = mqtt.connect('mqtt://192.168.1.132:1883')
+
 const client  = mqtt.connect('mqtt://localhost:1883',
                              {username: 'gateway',
                              password: 'matteo'})
@@ -11,7 +10,9 @@ const parser = mqtt_pk.parser(opts);
 
 const EventSource = require('eventsource');
 const port_cloud = 8880;
-var cloud = `http://localhost:${port_cloud}`;
+// var cloud = `http://localhost:${port_cloud}`;
+var cloud = `https://cloud-server.onrender.com`;
+// var cloud = `https://cloud-server.onrender`;
 // var cloud = `https://sse-4471.onrender.com`;
 // https://sse-4471.onrender.com
 
@@ -32,7 +33,8 @@ const name_user = 'matteo'; // tên đăng nhập web local
 const password = '2234';    // mật khẩu đăng nhập web local
 const cookie = {userId: 'test'};    // cookie web local
 
-var livingroom = {
+// lưu trữ các đối tượng của phòng khách
+var livingroom = {  
     sensor1: {
         temp:{ now : 0},
         humi: { now : 0},
@@ -40,45 +42,54 @@ var livingroom = {
     lamp1: {now: 'off'},
 }
 
-var bedroom = {
+// lưu trữ các đối tượng của phòng ngủ
+var bedroom = { 
     lamp1: {now: 'off'},
 }
 
-var kitchen = {
+// lưu trữ các đối tượng của phòng bếp
+var kitchen = { 
     lamp1: {now: 'off'}
 }
 
-client.on('connect', function () {
-    client.subscribe('esp32/output', function (err) {
+// xử lí khi connect thành công tới mqtt broker cụ thể là subscribe cá topic :V
+client.on('connect', function () { 
+    // subcribe topic esp32/output: điều khiển lamp-1 phòng khách 
+    client.subscribe('esp32/output', function (err) { 
       if (!err) {
         console.log(`(E): ${err}`);
       }
     });
 
-    client.subscribe('dht11/temperature', function (err) {
+    // subcribe topic dht11/temperature: trao đổi dữ liệu nhiệt độ
+    client.subscribe('dht11/temperature', function (err) {  
         if (!err) {
           console.log(`(E): ${err}`);
         }
     });
 
-    client.subscribe('dht11/humidity', function (err) {
+     // subcribe topic dht11/humidity: trao đổi dữ liệu độ ẩm 
+    client.subscribe('dht11/humidity', function (err) {  
       if (!err) {
         console.log(`(E): ${err}`);
       }
     });
 
+    // subcribe topic state/light/device-1: trao đổi trạng thái đèn 1 
     client.subscribe('state/light/device-1', function (err) {
         if (!err) {
           console.log(`(E): ${err}`);
         }
     });
 
+    // subcribe topic state/light/device-2: trao đổi trạng thái đèn 2
     client.subscribe('state/light/device-2', function (err) {
         if (!err) {
           console.log(`(E): ${err}`);
         }
     });
 
+    // subcribe topic state/light/device-3: trao đổi trạng thái đèn 3
     client.subscribe('state/light/device-3', function (err) {
         if (!err) {
           console.log(`(E): ${err}`);
@@ -87,23 +98,25 @@ client.on('connect', function () {
     
   })
 
-client.on('message', (topic, message, packet) => {
+// xử lí các meesage được publish tới các topic đã subscribe
+client.on('message', (topic, message, packet) => {  
     console.log(`(I): Topic: ${topic}`);
     console.log(`(I): Message: ${message}`);
     // console.log(packet);
     
     switch (topic) {
-        case 'dht11/temperature':
-            livingroom.sensor1.temp.now = parseFloat(packet.payload.toString()); 
-            io.emit('livingroom-sensor1-temp', livingroom.sensor1.temp.now ); 
+        case 'dht11/temperature':   // nhiệt độ từ bảm biến DHT11
+            livingroom.sensor1.temp.now = parseFloat(packet.payload.toString());    // lưu trữ giá trị nhiệt độ
+            io.emit('livingroom-sensor1-temp', livingroom.sensor1.temp.now );   // emit dữ liệu cho weblocal
 
             var data = {
                         value: parseFloat(packet.payload.toString()),
                     };
-            publishToCloud(data, 'temperature', 'livingroom/sensordht11/temp');
+            publishToCloud(data, 'temperature', 'livingroom/sensordht11/temp'); // đẩy dữ liệu tới cloud
             break;
 
-        case 'dht11/humidity':
+        case 'dht11/humidity':  // độ ẩm từ cảm biến 
+
             livingroom.sensor1.humi.now = parseFloat(packet.payload.toString());
             io.emit('livingroom-sensor1-humi', livingroom.sensor1.humi.now); 
 
@@ -113,7 +126,7 @@ client.on('message', (topic, message, packet) => {
             publishToCloud(data, 'humidity', 'livingroom/sensordht11/humi');
             break;
         
-        case 'state/light/device-1':
+        case 'state/light/device-1': // trạng thái đèn phòng khách
             var data = {
                 value: packet.payload.toString(),
             };
@@ -122,7 +135,7 @@ client.on('message', (topic, message, packet) => {
             publishToCloud(data, 'state', 'livingroom/lamp1');
             break;
 
-        case 'state/light/device-2':
+        case 'state/light/device-2': // trạng thái đèn phòng ngủ
             console.log(1);
             io.emit('bedroom-lamp1', bedroom.lamp1.now); 
                 var data = {
@@ -130,10 +143,10 @@ client.on('message', (topic, message, packet) => {
                 };
                 bedroom.lamp1.now = data.value;
                 io.emit('bedroom-lamp1', bedroom.lamp1.now); 
-                publishToCloud(data, 'state', 'state/light/device-2');
+                publishToCloud(data, 'state', 'bedroom/lamp1');
         break;
 
-        case 'state/light/device-3':
+        case 'state/light/device-3': // trạng thái đèn phòng bếp
                 var data = {
                     value: packet.payload.toString(),
                 };
@@ -149,19 +162,21 @@ client.on('message', (topic, message, packet) => {
 
 });
 
-var eventSource = new EventSource(`${cloud}/sse`);
+// khởi tạo connect SSE tới Cloud Server tại cổng API `${cloud}/sse`
+var eventSource = new EventSource(`${cloud}/sse`); 
 
+// xử lí response từ Cloud Server
 eventSource.onmessage = (e) => {
     try {    
-        const mess = JSON.parse(e.data);  
+        const mess = JSON.parse(e.data);  // convert đối tượng JSON sang đối tượng JavaScript để xử lí
         console.log(JSON.parse(e.data));
 
-        if (mess.device === 1) {   // đèn phòng khách
-            if (mess.signal === 'on') {
-                client.publish('esp32/output', 'on');
+        if (mess.device === 1) {   // respone điều khiển đèn phòng khách
+            if (mess.signal === 'on') { // respone yêu cầu bật đèn
+                client.publish('esp32/output', 'on'); // publish tín hiệu bật đèn
             }
-            else if (mess.signal === 'off') {
-                client.publish('esp32/output', 'off');
+            else if (mess.signal === 'off') {   // respone yêu cầu tắt đèn
+                client.publish('esp32/output', 'off'); // publish tín hiệu tắt đèn
             }
         }
         if (mess.device === 2) {   // đèn phòng ngủ
@@ -186,7 +201,12 @@ eventSource.onmessage = (e) => {
     }
 }
 
-//
+/**
+ * @brief : gửi dữ liệu tới cloud bằng phương thức POST tởi cổng API `${cloud}/publish/${topic}`
+ * @param {*} data : dữ liệu cần đẩy tới Cloud Server
+ * @param {*} type : loại dữ liệu, vd: temp(nhiệt độ), humi(độ ẩm), state...
+ * @param {*} topic : topic để ghép thành URL mà Cloud Server lắng nghe
+ */
 async function publishToCloud(data, type, topic){
 
     var data = {[type]: data.value};
@@ -198,7 +218,7 @@ async function publishToCloud(data, type, topic){
         },
         body: JSON.stringify(data),
     };
-    await fetch(`${cloud}/publish/${topic}`, option)
+    await fetch(`${cloud}/publish/${topic}`, option) // POST dữ liệu
         .then(function(response) {
             console.log(`(I): Successs ${type}`);
             return response.json();
@@ -207,23 +227,28 @@ async function publishToCloud(data, type, topic){
         .catch((err)=>console.log(`(E): ${err}`))
   }
 
-//``````````````````````````````````````````````````````````````````````
+/************************* LOCAL WEB SERVER ************************************** */
+//  
 app.get('/', (req, res) => {
     res.redirect('/app');
 });
 
-app.post('/login', (req, res) => {
+// xử lí yêu cầu đăng nhập
+app.post('/login', (req, res) => { 
 
     console.log(req.body.name, req.body.pass);
+    // kiểm tra user name và pass
     if (req.body.name === name_user && req.body.pass === password) {
         res.cookie('userId', cookie.userId);    // respone cookie to client
-        res.redirect('/app');
+        res.redirect('/app');   // điều hướng tới trang chủ
     } else {
-        res.sendFile(__dirname + '/view/login_wrong.html')
+        // respone html trang LOGIN với thông báo lỗi
+        res.sendFile(__dirname + '/view/login_wrong.html');  
     } 
 
 });
 
+// yêu cầu truy cập trang login
 app.get('/login', (req, res) => {
     console.log('Cookie: ', req.cookies, req.cookies.userId );
 
@@ -234,6 +259,7 @@ app.get('/login', (req, res) => {
     res.sendFile(__dirname + '/view/login.html');
 });
 
+// yêu cầu truy cập trang chủ
 app.get('/app', (req, res) => {;
     if (req.cookies.userId != cookie.userId) {
         res.redirect('/login');
@@ -242,6 +268,7 @@ app.get('/app', (req, res) => {;
     res.sendFile(__dirname + '/view/app.html');
 });
 
+// yêu cầu truy cập các trang giám sát và điều khiển từ trang chủ
 app.post('/app', (req, res) => {
     console.log( req.body.router);
    switch (req.body.router) {
@@ -260,6 +287,7 @@ app.post('/app', (req, res) => {
     case 'kitchen':
         res.redirect('/kitchen');
         break;
+
     case 'mainpage':
         res.redirect('/app');
     break;
@@ -269,6 +297,7 @@ app.post('/app', (req, res) => {
 
 });
 
+// yêu cầu truy cập trang điều khiển phòng khách
 app.get('/livingroom', (req, res) => {;
     if (req.cookies.userId != cookie.userId) {
         res.redirect('/login');
@@ -284,6 +313,7 @@ app.get('/livingroom', (req, res) => {;
 
 });
 
+// yêu cầu truy cập trang chủ từ trang điều khiển phòng khách
 app.post('/livingroom', (req, res) => {;
     switch (req.body.router) {
         case 'mainpage':
@@ -295,6 +325,7 @@ app.post('/livingroom', (req, res) => {;
     }
 });
 
+// yêu cầu truy cập trang điều khiển phòng khách
 app.get('/setting', (req, res) => {;
     if (req.cookies.userId != cookie.userId) {
         res.redirect('/login');
@@ -304,6 +335,7 @@ app.get('/setting', (req, res) => {;
     // res.send('<h1>SETTING MODE</h1>')
 });
 
+// yêu cầu truy cập trang cài đặt chế độ từ trang điều khiển phòng khách
 app.post('/setting', (req, res) => {;
     switch (req.body.router) {
         case 'mainpage':
@@ -315,6 +347,7 @@ app.post('/setting', (req, res) => {;
     }
 });
 
+// yêu cầu truy cập trang điều khiển phòng ngủ
 app.get('/bedroom', (req, res) => {;
     if (req.cookies.userId != cookie.userId) {
         res.redirect('/login');
@@ -329,6 +362,7 @@ app.get('/bedroom', (req, res) => {;
 
 });
 
+// yêu cầu truy cập trang cài đặt chế độ từ trang điều khiển phòng ngủ
 app.post('/bedroom', (req, res) => {;
     switch (req.body.router) {
         case 'mainpage':
@@ -340,6 +374,7 @@ app.post('/bedroom', (req, res) => {;
     }
 });
 
+// yêu cầu truy cập trang điều khiển phòng bếp
 app.get('/kitchen', (req, res) => {;
     if (req.cookies.userId != cookie.userId) {
         res.redirect('/login');
@@ -352,6 +387,7 @@ app.get('/kitchen', (req, res) => {;
 
 });
 
+// yêu cầu truy cập trang cài đặt chế độ từ trang điều khiển phòng bếp
 app.post('/kitchen', (req, res) => {;
     switch (req.body.router) {
         case 'mainpage':
@@ -363,59 +399,11 @@ app.post('/kitchen', (req, res) => {;
     }
 });
 
+// xử lí khi có connect tới server socket
 io.on('connection', (socket) => {
     console.log('user connected');
 
-    // onValue(ref(database, 'temp/now'), (snapshot) => {
-    //     const data = snapshot.val();
-    //     if (data) {
-    //         console.log(data.temp);
-    //         io.emit('temp-1', data.temp);      
-    //     } else {
-    //         console.log("(onValue) No data available");
-    //     }
-    // });
-
-    // onValue(ref(database, 'humi/now'), (snapshot) => {
-    //     const data = snapshot.val();
-    //     if (data) {
-    //         console.log(data.humi);
-    //         io.emit('humi-1', data.humi);      
-    //     } else {
-    //         console.log("(onValue) No data available");
-    //     }
-    // });
-
-    // onValue(ref(database, '/state/light/device-1/now/'), (snapshot) => {
-    //     const data = snapshot.val();
-    //     if (data) {
-    //         console.log(data.state);
-    //         io.emit('light-1', data.state);      
-    //     } else {
-    //         console.log("(onValue) No data available");
-    //     }
-    // });
-
-    // onValue(ref(database, '/bedroom/lamp1/now'), (snapshot) => {
-    //     const data = snapshot.val();
-    //     if (data) {
-    //         console.log(data.state);
-    //         io.emit('bedroom-lamp1', data.state);      
-    //     } else {
-    //         console.log("(onValue) No data available");
-    //     }
-    // });
-
-    // onValue(ref(database, '/kitchen/lamp1/now'), (snapshot) => {
-    //     const data = snapshot.val();
-    //     if (data) {
-    //         console.log(data.state);
-    //         io.emit('kitchen-lamp1', data.state);      
-    //     } else {
-    //         console.log("(onValue) No data available");
-    //     }
-    // });
-
+    // lắng nghe sự kiện bấm nút đèn 1 phòng khách từ UI
     socket.on('livingroom-btn-lamp1', data => {
         console.log(data);
         if (data.message === 'on') {
@@ -426,6 +414,7 @@ io.on('connection', (socket) => {
         }
     });
 
+    // lắng nghe sự kiện bấm nút đèn 1 phòng ngủ từ UI
     socket.on('bedroom-btn-lamp1', data => {
         console.log(data);
         if (data.message === 'on') {
@@ -436,6 +425,7 @@ io.on('connection', (socket) => {
         }
     });
 
+    // lắng nghe sự kiện bấm nút đèn 1 phòng bếp từ UI
     socket.on('kitchen-btn-lamp1', data => {
         if (data.message === 'on') {
             client.publish('esp32/output3', 'on');
@@ -447,7 +437,7 @@ io.on('connection', (socket) => {
   
 });
 
-
+// khởi tạo server lắng nghe cổng `port_local`
 server.listen(port_local, () => {
     console.log(`App local listening on port ${port_local}`);
 });
